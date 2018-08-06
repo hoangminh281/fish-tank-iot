@@ -4,7 +4,6 @@
 #include <ESP8266WiFi.h>
 #include <FirebaseArduino.h>
 #include <NTPtimeESP.h>
-#include <Arduino.h>
 #include <U8g2lib.h>
 
 #ifdef U8X8_HAVE_HW_SPI
@@ -73,7 +72,7 @@ void loop() {
   
   u8g2.clearBuffer();
   u8g2.setFont(u8g2_font_unifont_t_symbols);
-  u8g2.drawUTF8(0, 20, "Humi: ");
+  u8g2.drawUTF8(5, 20, "Snowman: ☃"); 
   u8g2.sendBuffer();
 
   dateTime = NTPch.getNTPtime(7.0, 0);
