@@ -1,5 +1,6 @@
 #include <ESP8266WiFi.h>
 #include <FirebaseArduino.h>
+#include <NTPtimeESP.h>
 
 #define FIREBASE_HOST "qlcn-3d083.firebaseio.com"
 #define FIREBASE_AUTH "DqRKMGNqF5HjBQSVqDBN7FDFSA4OrcPBaGQL82RT"
@@ -9,11 +10,19 @@
 #define KEY_HUMI "humidity"
 #define KEY_ENVTEMP "env_temperature"
 #define KEY_WATERTEMP "water_temperature"
+#define KEY_LED1TURNONTIMESTAMP "led1TurnOnTimeStamp"
+#define KEY_LED1TURNOFFTIMESTAMP "led1TurnOffTimeStamp"
 
-int isOnLed1;
+NTPtime NTPch("ch.pool.ntp.org");
+strDateTime dateTime;
+
 String data;
 String key;
 String value;
+int isOnLed1;
+int currentTimeStamp;
+int led1TurnOnTimeStamp;
+int led1TurnOffTimeStamp;
 
 void setup() {
   Serial.begin(115200);
@@ -28,6 +37,15 @@ void setup() {
 
 void loop()
 {
+  dateTime = NTPch.getNTPtime(7.0, 0);
+  led1TurnOnTimeStamp = receiveIntFirebase(KEY_LED1TURNONTIMESTAMP);
+  led1TurnOffTimeStamp = receiveIntFirebase(KEY_LED1TURNOFFTIMESTAMP);
+  if (dateTime.valid && led1TurnOnTimeStamp!=0 && led1TurnOffTimeStamp!=0) {
+    currentTimeStamp = dateTime.hour * 10000 + dateTime.minute * 100 + dateTime.second;
+    sendUNO("1", (String)currentTimeStamp);
+    sendUNO("2", (String)led1TurnOnTimeStamp);
+    sendUNO("3", (String)led1TurnOffTimeStamp);
+  }
   data = receiveUNO();
   if (data!="")
   {
@@ -53,14 +71,20 @@ void setFirebase(String key, float value)
   Firebase.setFloat(key, value);
 }
 
-int receiveFirebase(String key)
+float receiveFloatFirebase(String key)
 {
   return Firebase.getFloat(key);
 }
 
-void sendUNO(String data)
+int receiveIntFirebase(String key)
 {
-  Serial.println(data);
+  return Firebase.getInt(key);
+}
+
+void sendUNO(String key, String data)
+{
+  Serial.print(key + data);
+  delay(500);
 }
 
 String receiveUNO()
