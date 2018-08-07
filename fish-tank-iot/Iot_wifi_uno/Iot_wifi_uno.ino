@@ -53,15 +53,27 @@ void setup() {
   dht.begin();
   pinMode(led1, OUTPUT);
   u8g2.begin();
-  
+
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   while (WiFi.status() != WL_CONNECTED)
   {
-    delay(500);
+    u8g2.clearBuffer();
+    u8g2.setFont(u8g2_font_unifont_t_symbols);
+    u8g2.drawStr(5, 20, "Connecting...");
+    u8g2.sendBuffer();
+    delay(1000);
   }
-  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  
+  u8g2.clearBuffer();
+  u8g2.setFont(u8g2_font_unifont_t_symbols);
+  u8g2.setCursor(5, 20);
+  u8g2.println("Connected to");
+  u8g2.setCursor(5, 29);
+  u8g2.print(WIFI_SSID);
+  u8g2.sendBuffer();
 
-  delay(500);
+  Firebase.begin(FIREBASE_HOST, FIREBASE_AUTH);
+  delay(1000);
 }
 
 void loop() {
@@ -69,11 +81,6 @@ void loop() {
   humi = dht.readHumidity();
   dltemp.requestTemperatures();
   watertemp = dltemp.getTempCByIndex(0);
-  
-  u8g2.clearBuffer();
-  u8g2.setFont(u8g2_font_unifont_t_symbols);
-  u8g2.drawUTF8(5, 20, "Snowman: ☃"); 
-  u8g2.sendBuffer();
 
   dateTime = NTPch.getNTPtime(7.0, 0);
   led1TurnOnTimeStamp = receiveIntFirebase(KEY_LED1TURNONTIMESTAMP);
@@ -81,7 +88,48 @@ void loop() {
 
   if (dateTime.valid)
   {
-    if (currentTimeStamp!=0 && led1TurnOnTimeStamp!=0 && led1TurnOffTimeStamp!=0)
+    
+    u8g2.clearBuffer();          // clear the internal memory
+    u8g2.setFont(u8g2_font_amstrad_cpc_extended_8f);  // choose a suitable font
+  
+    u8g2.setCursor(3,10);
+    u8g2.print ("Date : ");
+    u8g2.setCursor(55,10);
+    u8g2.print(dateTime.day, DEC);
+    u8g2.print('/');
+    u8g2.print(dateTime.month, DEC);
+    u8g2.print('/');
+    u8g2.print(dateTime.year, DEC);
+    
+    u8g2.setCursor(3,19);
+    u8g2.print ("Time : ");
+    u8g2.setCursor(62,19);
+    u8g2.print(dateTime.hour, DEC);
+    u8g2.print(':');
+    u8g2.print(dateTime.minute, DEC);
+    u8g2.print(':');
+    u8g2.print(dateTime.second, DEC);
+  
+    u8g2.setCursor(3,28);
+    u8g2.print ("env Temp :");
+    u8g2.print (envtemp, DEC);
+    u8g2.println ("°C");
+
+    u8g2.setCursor(3,37);
+    u8g2.print ("wat Temp :");
+    u8g2.print (watertemp, DEC);
+    u8g2.println ("°C");
+    
+    u8g2.setCursor (3, 46);
+    u8g2.print ("Humidity :");
+    u8g2.print (humi, DEC);
+    u8g2.println ('%');
+    
+    u8g2.setFont(u8g2_font_profont22_tf);
+    u8g2.drawFrame(0, 0, 128, 64);
+    u8g2.sendBuffer();          // transfer internal memory to the display
+
+    if (led1TurnOnTimeStamp!=0 && led1TurnOffTimeStamp!=0)
     {
       currentTimeStamp = dateTime.hour * 10000 + dateTime.minute * 100 + dateTime.second;
       if (led1TurnOnTimeStamp <= currentTimeStamp && currentTimeStamp <= led1TurnOffTimeStamp)
