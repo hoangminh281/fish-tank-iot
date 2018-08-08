@@ -83,7 +83,7 @@ void loop() {
   humi = dht.readHumidity();
   dltemp.requestTemperatures();
   watertemp = dltemp.getTempCByIndex(0);
-
+  
   dateTime = NTPch.getNTPtime(7.0, 0);
   led1TurnOnTimeStamp = receiveIntFirebase(KEY_LED1TURNONTIMESTAMP);
   led1TurnOffTimeStamp = receiveIntFirebase(KEY_LED1TURNOFFTIMESTAMP);
@@ -146,17 +146,19 @@ void printScreen(strDateTime dateTime, double envtemp, double humi, double water
   u8g2.print (dateTime.second, DEC);
 
   u8g2.setCursor(3,28);
-  u8g2.print ("env T:");
+  u8g2.print ("env Temp :");
   u8g2.print ((int)envtemp, DEC);
   u8g2.println ("°C");
 
   u8g2.setCursor(3,37);
-  u8g2.print ("wat T:");
-  u8g2.print (watertemp, DEC);
+  u8g2.print ("wat Temp :");
+  u8g2.print ((int)watertemp, DEC);
+  u8g2.print ('.');
+  u8g2.print ((int)((watertemp - (int)watertemp) * 10), DEC);
   u8g2.println ("°C");
   
   u8g2.setCursor (3, 46);
-  u8g2.print ("Humi :");
+  u8g2.print ("Humidity :");
   u8g2.print ((int)humi, DEC);
   u8g2.println ('%');
   
