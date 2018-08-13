@@ -5,6 +5,7 @@
 #include <FirebaseArduino.h>
 #include <NTPtimeESP.h>
 #include <U8g2lib.h>
+#include <Servo.h>
 
 #ifdef U8X8_HAVE_HW_SPI
 #include <SPI.h>
@@ -16,7 +17,7 @@
 U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ SCL, /* data=*/ SDA, /* reset=*/ U8X8_PIN_NONE);
 
 #define FIREBASE_HOST             "qlcn-3d083.firebaseio.com"
-#define FIREBASE_AUTH             "DqRKMGNqF5HjBQSVqDBN7FDFSA4OrcPBaGQL82RT"
+#define FIREBASE_AUTH             "eXe3tzOEB5V29zomj4ksdomXrUXFQfO4nG4dC3fr"
 #define WIFI_SSID                 "TMA20years"
 #define WIFI_PASSWORD             "TMA20years"
 
@@ -25,6 +26,12 @@ U8G2_SSD1306_128X64_NONAME_F_SW_I2C u8g2(U8G2_R0, /* clock=*/ SCL, /* data=*/ SD
 #define KEY_WATERTEMP             "water_temperature"
 #define KEY_LED1TURNONTIMESTAMP   "led1TurnOnTimeStamp"
 #define KEY_LED1TURNOFFTIMESTAMP  "led1TurnOffTimeStamp"
+#define KEY_SERVOTURNONTIMESTAMP  "servoTurnOnTimeStamp"
+#define KEY_SERVOTURNOFFTIMESTAMP "servoTurnOffTimeStamp"
+#define KEY_SERVODURATION         "servoDuration"
+#define ONE_WIRE_BUS              02
+#define led1                      00
+#define servo                     04
 
 NTPtime NTPch("ch.pool.ntp.org");
 strDateTime dateTime;
@@ -33,15 +40,14 @@ const int DHT_PIN = 16;
 const int DHT_TYPE = DHT11;
 DHT dht(DHT_PIN, DHT_TYPE);
 
-#define ONE_WIRE_BUS 02
 OneWire oneWire(ONE_WIRE_BUS);
 DallasTemperature dltemp(&oneWire);
+
+Servo myservo;
 
 double envtemp = 0.0f;
 double humi = 0.0f;
 double watertemp = 0.0f;
-
-#define led1 00
 
 int currentTimeStamp;
 int led1TurnOnTimeStamp;
@@ -52,6 +58,7 @@ void setup() {
   dltemp.begin();
   pinMode(2, INPUT_PULLUP);
   dht.begin();
+  myservo.attach(servo);
   pinMode(led1, OUTPUT);
   u8g2.begin();
   u8g2.enableUTF8Print();
@@ -83,6 +90,10 @@ void loop() {
   humi = dht.readHumidity();
   dltemp.requestTemperatures();
   watertemp = dltemp.getTempCByIndex(0);
+
+  setFloatFirebase(KEY_ENVTEMP, envtemp);
+  setFloatFirebase(KEY_HUMI, humi);
+  setFloatFirebase(KEY_WATERTEMP, watertemp);
   
   dateTime = NTPch.getNTPtime(7.0, 0);
   led1TurnOnTimeStamp = receiveIntFirebase(KEY_LED1TURNONTIMESTAMP);
